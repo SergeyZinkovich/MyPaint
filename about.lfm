@@ -1,0 +1,26 @@
+object Aboutform: TAboutform
+  Left = 343
+  Height = 240
+  Top = 397
+  Width = 320
+  Caption = 'About'
+  ClientHeight = 240
+  ClientWidth = 320
+  LCLVersion = '1.6.0.4'
+  object Label1: TLabel
+    Left = 104
+    Height = 15
+    Top = 72
+    Width = 102
+    Caption = 'Зинькович Сергей'
+    ParentColor = False
+  end
+  object Label2: TLabel
+    Left = 136
+    Height = 15
+    Top = 96
+    Width = 37
+    Caption = 'Б8103а'
+    ParentColor = False
+  end
+end
