@@ -22,12 +22,16 @@ uses
     procedure WidthChange(Sender:TObject);
     procedure PenStyleChange(Sender:TObject);
     procedure CreatePenProperty(APanel:TPanel);
+    procedure PenStylesBoxDrawItem(Control: TWinControl;
+      Index: Integer; ARect: TRect; State: TOwnerDrawState);
   end;
 
   TFigureTool = class(TLinesTool)
     ToolBrushStyle:TBrushStyle;
     procedure BrushStyleChange(Sender:TObject);
     procedure CreateBrushProperty(APanel:TPanel);
+    procedure BrushStylesBoxDrawItem(Control: TWinControl;
+      Index: Integer; ARect: TRect; State: TOwnerDrawState);
   end;
 
   TPolylineTool = class(TLinesTool)
@@ -130,12 +134,30 @@ begin
   PenStylesLable.Caption:='Pen Style';
   PenStylesLable.Parent:=APanel;
   PenStylesBox:=TComboBox.Create(Mainform);
-  PenStylesBox.Items.CommaText:='Solid,Dash,Dot,DashDot,DashDotDot';
-  PenStylesBox.ItemIndex:=0;
   PenStylesBox.ReadOnly:=True;
   PenStylesBox.Top:=60;
   PenStylesBox.Parent := APanel;
+  PenStylesBox.Items.CommaText:='Solid,Dash,Dot,DashDot,DashDotDot';
+  PenStylesBox.Style:=csOwnerDrawFixed;
+  PenStylesBox.OnDrawItem:=@PenStylesBoxDrawItem;
+  PenStylesBox.ItemIndex:=0;
   PenStylesBox.OnChange :=@PenStyleChange;
+end;
+
+procedure TLinesTool.PenStylesBoxDrawItem(Control: TWinControl;
+  Index: Integer; ARect: TRect; State: TOwnerDrawState);
+var
+  Y:integer;
+begin
+  Y:=ARect.Top+7;
+  case Index  of
+    0 : (Control as TComboBox).Canvas.Pen.Style:= psSolid;
+    1 : (Control as TComboBox).Canvas.Pen.Style:= psDash;
+    2 : (Control as TComboBox).Canvas.Pen.Style:= psDot;
+    3 : (Control as TComboBox).Canvas.Pen.Style:= psDashDot;
+    4 : (Control as TComboBox).Canvas.Pen.Style:= psDashDotDot;
+  end;
+  (Control as TComboBox).Canvas.Line(0, Y, 100,Y);
 end;
 
 procedure TFigureTool.CreateBrushProperty(APanel:TPanel);
@@ -154,9 +176,33 @@ begin
   BrushStylesBox.ItemIndex:=0;
   BrushStylesBox.ReadOnly:=True;
   BrushStylesBox.Top:=100;
+  BrushStylesBox.Style:=csOwnerDrawFixed;
+  BrushStylesBox.OnDrawItem:=@BrushStylesBoxDrawItem;
   BrushStylesBox.Parent := APanel;
   BrushStylesBox.OnChange:=@BrushStyleChange;
   end;
+
+procedure TFigureTool.BrushStylesBoxDrawItem(Control: TWinControl;
+  Index: Integer; ARect: TRect; State: TOwnerDrawState);
+var
+  PRect:TRect;
+begin
+  PRect.Left:= ARect.Left+8;
+  PRect.Right:= ARect.Right-8;
+  PRect.Top:= ARect.Top+4;
+  PRect.Bottom:= ARect.Bottom-4;
+  case Index  of
+    0 : (Control as TComboBox).Canvas.Brush.Style:= bsSolid;
+    1 : (Control as TComboBox).Canvas.Brush.Style:= bsBDiagonal;
+    2 : (Control as TComboBox).Canvas.Brush.Style:= bsDiagCross;
+    3 : (Control as TComboBox).Canvas.Brush.Style:= bsVertical;
+    4 : (Control as TComboBox).Canvas.Brush.Style:= bsCross;
+    5 : (Control as TComboBox).Canvas.Brush.Style:= bsFDiagonal;
+    6 : (Control as TComboBox).Canvas.Brush.Style:= bsHorizontal;
+  end;
+  (Control as TComboBox).Canvas.Brush.Color:=clBlack;
+  (Control as TComboBox).Canvas.Rectangle(PRect);
+end;
 
 procedure TLinesTool.WidthChange(Sender:TObject);
 begin
