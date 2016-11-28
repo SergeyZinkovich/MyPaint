@@ -46,6 +46,17 @@ uses
     procedure PropertiesCreate(APanel:TPanel);override;
   end;
 
+  TRoundRectangleTool = class(TRectangleTool)
+  RoundingWidth,RoundingHeight:integer;
+  public
+  constructor Create;
+  procedure FigureCreate(Point: TPoint); override;
+  procedure AddPoint(Point: TPoint); override;
+  procedure PropertiesCreate(APanel:TPanel);override;
+  procedure RoundingWidthChange(Sender:TObject);
+  procedure RoundingHeightChange(Sender:TObject);
+  end;
+
   TEllipseTool = class(TFigureTool)
     constructor Create;
     procedure FigureCreate(Point: TPoint); override;
@@ -246,6 +257,75 @@ begin
   CreateBrushProperty(APanel);
 end;
 
+procedure TRoundRectangleTool.FigureCreate(Point: TPoint);
+begin
+  SetLength(Figures,length(Figures)+1);
+  Figures[high(Figures)] := TRoundRectangle.Create;
+  Drawing:=true;
+  with (Figures[high(Figures)] as TRoundRectangle) do
+    begin
+      SetLength(Points,2);
+      Points[0] := Scrn2Wrld(Point);
+      Points[1] := Scrn2Wrld(Point);
+      BrushStyle:=ToolBrushStyle;
+      PenStyle:=ToolPenStyle;
+      PenColor:=Color1;
+      BrushColor:=Color2;
+      Width:=Self.Width;
+      RHeight:=RoundingHeight;
+      RWidth:=RoundingWidth;
+    end;
+  FindMinMax(Scrn2Wrld(Point));
+end;
+
+procedure TRoundRectangleTool.AddPoint(Point: TPoint);
+begin
+  with Figures[high(Figures)] do
+    begin
+      Points[1] := Scrn2Wrld(Point);
+    end;
+  FindMinMax(Scrn2Wrld(Point));
+end;
+
+procedure TRoundRectangleTool.PropertiesCreate(APanel:TPanel);
+var
+  RoundingLabel:TLabel;
+  WidthRoundingEdit,HeightRoundingEdit:TSpinEdit;
+begin
+  CreatePenProperty(APanel);
+  CreateBrushProperty(APanel);
+  RoundingLabel:=TLabel.Create(Mainform);
+  RoundingLabel.Caption:='Rounding';
+  RoundingLabel.Top:=125;
+  RoundingLabel.Parent:=APanel;
+  WidthRoundingEdit := TSpinEdit.Create(Mainform);
+  WidthRoundingEdit.Top:=140;
+  WidthRoundingEdit.MinValue:=1;
+  WidthRoundingEdit.MaxValue:=200;
+  WidthRoundingEdit.Value:=15;
+  WidthRoundingEdit.Parent := APanel;
+  WidthRoundingEdit.OnChange:=@RoundingWidthChange;
+  RoundingWidth:=15;
+  HeightRoundingEdit := TSpinEdit.Create(Mainform);
+  HeightRoundingEdit.Top:=165;
+  HeightRoundingEdit.MinValue:=1;
+  HeightRoundingEdit.MaxValue:=200;
+  HeightRoundingEdit.Value:=15;
+  HeightRoundingEdit.Parent := APanel;
+  HeightRoundingEdit.OnChange:=@RoundingHeightChange;
+  RoundingHeight:=15;
+end;
+
+procedure TRoundRectangleTool.RoundingWidthChange(Sender:TObject);
+begin
+  RoundingWidth:=(Sender as TSpinEdit).Value;
+end;
+
+procedure TRoundRectangleTool.RoundingHeightChange(Sender:TObject);
+begin
+  RoundingHeight:=(Sender as TSpinEdit).Value;
+end;
+
 procedure TEllipseTool.FigureCreate(Point: TPoint);
 begin
   SetLength(Figures,length(Figures)+1);
@@ -335,13 +415,13 @@ end;
 
 procedure TRegularPolygonTool.PropertiesCreate(APanel:TPanel);
 var
-  ConersCountLable:TLabel;
+  ConersCountLabel:TLabel;
   ConersCountEdit:TSpinEdit;
 begin
-  ConersCountLable:=TLabel.Create(Mainform);
-  ConersCountLable.Caption:='Coners Count';
-  ConersCountLable.Top:=125;
-  ConersCountLable.Parent:=APanel;
+  ConersCountLabel:=TLabel.Create(Mainform);
+  ConersCountLabel.Caption:='Coners Count';
+  ConersCountLabel.Top:=125;
+  ConersCountLabel.Parent:=APanel;
   ConersCountEdit := TSpinEdit.Create(Mainform);
   ConersCountEdit.Top:=140;
   ConersCountEdit.MinValue:=3;
@@ -434,6 +514,11 @@ begin
   Icon := 'ico/rectangle.png';
 end;
 
+constructor TRoundRectangleTool.Create;
+begin
+  Icon := 'ico/RoundRectangle.png';
+end;
+
 constructor TEllipseTool.Create;
 begin
   Icon := 'ico/ellipse.png';
@@ -463,6 +548,7 @@ initialization
 
 RegisterTool(TPolylineTool.Create);
 RegisterTool(TRectangleTool.Create);
+RegisterTool(TRoundRectangleTool.Create);
 RegisterTool(TEllipseTool.Create);
 RegisterTool(TLineTool.Create);
 RegisterTool(TRegularPolygonTool.Create);

@@ -32,6 +32,11 @@ Classes, SysUtils, Graphics, UScale;
     procedure Draw(Canvas:TCanvas); override;
   end;
 
+  TRoundRectangle = class(TRectangle)
+    RWidth,RHeight:integer;
+    procedure Draw(Canvas:TCanvas); override;
+  end;
+
   TEllipse = class(TFigure)
     PenStyle:TPenStyle;
     BrushStyle:TBrushStyle;
@@ -87,6 +92,16 @@ begin
   Canvas.Pen.Color := PenColor;
   Canvas.Pen.Width:= Width;
   Canvas.Rectangle(WorldToScreen(DoubleRect(Points[0],Points[1])));
+end;
+
+procedure TRoundRectangle.Draw(Canvas: TCanvas);
+begin
+  Canvas.Pen.Style:=PenStyle;
+  Canvas.Brush.Style:=BrushStyle;
+  Canvas.Brush.Color:=BrushColor;
+  Canvas.Pen.Color := PenColor;
+  Canvas.Pen.Width:= Width;
+  Canvas.RoundRect(WorldToScreen(DoubleRect(Points[0],Points[1])),RWidth,RHeight);
 end;
 
 procedure TEllipse.Draw(Canvas: TCanvas);
