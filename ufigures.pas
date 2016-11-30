@@ -5,7 +5,7 @@ unit UFigures;
 interface
 
 uses
-Classes, SysUtils, Graphics, UScale;
+Classes, SysUtils, Graphics, UScale ,GraphMath ,Math ,Dialogs;
 
  type
 
@@ -68,6 +68,7 @@ Classes, SysUtils, Graphics, UScale;
     Width:integer;
     ConersCount:Integer;
     procedure Draw(Canvas:TCanvas); override;
+    function Rotate(P1,P2: TDoublePoint; angle: double): TDoublePoint;
   end;
 
 implementation
@@ -132,11 +133,12 @@ end;
 
 procedure TRegularPolygon.Draw(Canvas: TCanvas);
 var
-  i,r,k,z:Integer;
-  APolygon:array of TPoint;
+  i,r,k:Integer;
+  FAngle:Double;
+  APolygon:array of TDoublePoint;
+  APolygonScreen:array of TPoint;
 begin
   k:=0;
-  z:=0;
   Canvas.Pen.Style:=PenStyle;
   Canvas.Pen.Color := PenColor;
   Canvas.Brush.Style:=BrushStyle;
@@ -144,16 +146,24 @@ begin
   Canvas.Pen.Width:= Width;
   k:=360 div ConersCount;
   r:=round(sqrt(sqr(abs(Points[0].X-Points[1].X))+sqr(abs(Points[0].Y-Points[1].Y))));
+  FAngle:= arctan2(Points[0].Y - Points[1].Y, Points[0].X - Points[1].X);
   SetLength(APolygon,ConersCount);
+  SetLength(APolygonScreen,ConersCount);
   for i:=0 to ConersCount-1 do
     begin
-      APolygon[i].X:=Round(Points[0].X+cos(z/180*pi)*r);
-      APolygon[i].Y:=Round(Points[0].Y-sin(z/180*pi)*r);
-      z:=z+k;
+      APolygon[i].X:=Points[0].X+cos(k*i/180*pi)*r;
+      APolygon[i].Y:=Points[0].Y+sin(k*i/180*pi)*r;
+      APolygonScreen[i]:=WorldToScreen(Rotate(Points[0],APolygon[i],FAngle))
     end;
   for i:=0 to ConersCount-1 do
-    APolygon[i]:=WorldToScreen(DoublePoint(APolygon[i].X,APolygon[i].Y));
-  Canvas.Polygon(APolygon);
+    APolygonScreen[i]:=WorldToScreen(DoublePoint(APolygonScreen[i].X,APolygonScreen[i].Y));
+  Canvas.Polygon(APolygonScreen);
+end;
+
+function TRegularPolygon.Rotate(P1,P2: TDoublePoint; angle: double): TDoublePoint;
+begin
+  Result.x := P1.x+(P2.x-P1.x)*cos(angle)-(P2.Y-P1.Y)*sin(angle);
+  Result.Y := P1.y+(P2.x-P1.x)*sin(angle)+(P2.Y-P1.Y)*cos(angle);
 end;
 
 end.
