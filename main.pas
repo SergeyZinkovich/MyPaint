@@ -61,15 +61,15 @@ type
   end;
 
 var
-  PalletColors:array of array of TColor;
-  ChoosenTool:TTool;
-  Figures:array of TFigure;
+  PalletColors: array of array of TColor;
+  ChoosenTool: TTool;
+  Figures: array of TFigure;
   Mainform: TMainform;
-  Drawing:boolean;
-  Color1:TColor=clBlack;
-  Color2:TColor=clWhite;
-  PositionProgramChange:boolean;
-  ChooseFirstTool:boolean=true;
+  Drawing: boolean;
+  Color1: TColor = clBlack;
+  Color2: TColor = clWhite;
+  PositionProgramChange: boolean;
+  ChooseFirstTool: boolean = true;
 implementation
 
 {$R *.lfm}
@@ -84,16 +84,16 @@ end;
 
 procedure TMainform.ClearbuttonClick(Sender: TObject);
 begin
-  SetLength(Figures,0);
-  Zoom:=100;
-  VertScroll.Max:=578;
-  VertScroll.Min:=0;
-  VertScroll.Position:=0;
-  HorzScroll.Max:=754;
-  HorzScroll.Min:=0;
-  HorzScroll.Position:=0;
-  MinPoint:=DoublePoint(0,0);
-  MinPoint:=DoublePoint(0,0);
+  SetLength(Figures, 0);
+  Zoom := 100;
+  VertScroll.Max := 578;
+  VertScroll.Min := 0;
+  VertScroll.Position := 0;
+  HorzScroll.Max := 754;
+  HorzScroll.Min := 0;
+  HorzScroll.Position := 0;
+  MinPoint := DoublePoint(0,0);
+  MinPoint := DoublePoint(0,0);
   PaintBox1.Refresh;
 end;
 
@@ -104,25 +104,27 @@ end;
 
 procedure TMainform.FormCreate(Sender: TObject);
 var
-  i,j:integer;
+  i, j: integer;
   ToolBtn: TSpeedButton;
   ToolIcon: TBitmap;
 begin
-  PaintBox1.Canvas.Pen.Color:=Color1;
-  PaintBox1.Canvas.Brush.Color:=Color2;
+  PaintBox1.Canvas.Pen.Color := Color1;
+  PaintBox1.Canvas.Brush.Color := Color2;
 
-  SetLength(PalletColors,Palette.ColCount);
-  for i:=0 to Palette.ColCount-1 do
+  SetLength(PalletColors, Palette.ColCount);
+  for i := 0 to Palette.ColCount - 1 do
     begin
-      SetLength(PalletColors[i],Palette.RowCount);
-        for j:=0 to Palette.RowCount-1 do
-          PalletColors[i][j] := RGBToColor(floor((i-1)/((Palette.ColCount-1)-1)*255),
-            floor(j/(Palette.RowCount-1)*255),
-            floor((((Palette.ColCount-1)-1-(i-1))*(Palette.RowCount-1-j))
-            /((Palette.RowCount-1)*((Palette.ColCount-1)-1))*255));
+      SetLength(PalletColors[i], Palette.RowCount);
+        for j := 0 to Palette.RowCount - 1 do
+          PalletColors[i][j] := RGBToColor(floor((i - 1) /
+            ((Palette.ColCount - 1) - 1) * 255),
+            floor(j / (Palette.RowCount - 1) * 255),
+            floor((((Palette.ColCount - 1) - 1 - (i - 1)) *
+            (Palette.RowCount - 1 - j))
+            / ((Palette.RowCount - 1) * ((Palette.ColCount - 1) - 1)) * 255));
     end;
-  PalletColors[0][0]:=clBlack;
-  PalletColors[Palette.RowCount-1][Palette.ColCount-1]:=clWhite;
+  PalletColors[0][0] := clBlack;
+  PalletColors[Palette.RowCount - 1][Palette.ColCount - 1] := clWhite;
 
   for i := 0 to High(Tools) do
     begin
@@ -147,7 +149,7 @@ begin
       ToolBtn.Parent := ToolPanel;
       if ChooseFirstTool then
         ToolBtn.Click;
-      ChooseFirstTool:=false;
+      ChooseFirstTool := false;
   end;
 end;
 
@@ -156,17 +158,17 @@ procedure TMainform.PaintBox1MouseWheel(Sender: TObject; Shift: TShiftState;
 var
   oldzoom:integer;
 begin
-  oldzoom:=Zoom;
-  if WheelDelta>0 then
-    Zoom:=Zoom+10
+  oldzoom := Zoom;
+  if WheelDelta > 0 then
+    Zoom := Zoom + 10
   else
-    Zoom:=Zoom-10;
-  if Zoom>1000 then
-    Zoom:=1000;
-  if Zoom<1 then
-    Zoom:=1;
-  CenterZoom(PaintBox1.Width,PaintBox1.Height,oldzoom);
-  ZoomEdit.Text:=IntToStr(Zoom);
+    Zoom := Zoom - 10;
+  if Zoom > 1000 then
+    Zoom := 1000;
+  if Zoom < 1 then
+    Zoom := 1;
+  CenterZoom(PaintBox1.Width, PaintBox1.Height, oldzoom);
+  ZoomEdit.Text := IntToStr(Zoom);
 end;
 
 procedure TMainform.ScrollScroll(Sender: TObject; ScrollCode: TScrollCode;
@@ -174,10 +176,10 @@ procedure TMainform.ScrollScroll(Sender: TObject; ScrollCode: TScrollCode;
 begin
   if not PositionProgramChange then
     begin
-      Scroll(VertScroll.Position,HorzScroll.Position);
+      Scroll(VertScroll.Position, HorzScroll.Position);
       Invalidate;
     end;
-  PositionProgramChange:=false;
+  PositionProgramChange := false;
 end;
 
 procedure TMainform.ToolClick(Sender: TObject);
@@ -187,33 +189,33 @@ begin
   ChoosenTool := Tools[(Sender as TSpeedButton).Tag];
   if FindComponent('PropertyPanel') <> nil then
     FindComponent('PropertyPanel').Free;
-  PropertyPanel:=TPanel.Create(Mainform);
-  PropertyPanel.Parent:=Mainform;
-  PropertyPanel.Anchors:=[akTop,akRight];
-  PropertyPanel.Name:='PropertyPanel';
-  PropertyPanel.Caption:='';
-  PropertyPanel.Width:=100;
-  PropertyPanel.Height:=200;
-  PropertyPanel.Top:=350;
-  PropertyPanel.Left:=750;
+  PropertyPanel := TPanel.Create(Mainform);
+  PropertyPanel.Parent := Mainform;
+  PropertyPanel.Anchors := [akTop,akRight];
+  PropertyPanel.Name := 'PropertyPanel';
+  PropertyPanel.Caption := '';
+  PropertyPanel.Width := 100;
+  PropertyPanel.Height := 200;
+  PropertyPanel.Top := 350;
+  PropertyPanel.Left := 750;
   ChoosenTool.PropertiesCreate(PropertyPanel);
 end;
 
 procedure TMainform.zoomeditChange(Sender: TObject);
 var
-  oldzoom:double;
+  oldzoom: double;
 begin
-  oldzoom:=Zoom;
-  Zoom:=zoomedit.Value;
-  CenterZoom(PaintBox1.Width,PaintBox1.Height,oldzoom);
+  oldzoom := Zoom;
+  Zoom := zoomedit.Value;
+  CenterZoom(PaintBox1.Width, PaintBox1.Height, oldzoom);
   Invalidate;
 end;
 
 procedure TMainform.MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
-  PaintBox1.Canvas.Pen.Color:=Color1;
-  ChoosenTool.FigureCreate(Point(X,Y));
+  PaintBox1.Canvas.Pen.Color := Color1;
+  ChoosenTool.FigureCreate(Point(X, Y));
   Invalidate;
 end;
 
@@ -222,7 +224,7 @@ procedure TMainform.MouseMove(Sender: TObject; Shift: TShiftState; X,
 begin
   if Drawing then
     begin
-      ChoosenTool.AddPoint(Point(X,Y));
+      ChoosenTool.AddPoint(Point(X, Y));
     end;
   Invalidate;
 end;
@@ -230,63 +232,61 @@ end;
 procedure TMainform.MouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 var
-  RButton:Boolean;
+  RButton: Boolean;
 begin
-  Drawing:=false;
-  if Button=mbLeft then
-    RButton:=false;
-  if Button=mbRight then
-    RButton:=true;
-  ChoosenTool.MouseUp(Point(X,Y),RButton);
+  Drawing := false;
+  if Button = mbLeft then
+    RButton := false;
+  if Button = mbRight then
+    RButton := true;
+  ChoosenTool.MouseUp(Point(X, Y), RButton);
 end;
 
 procedure TMainform.OnPaint(Sender: TObject);
 var
-  i:integer;
-  MaxP,MinP:TDoublePoint;
+  i: integer;
+  MaxP, MinP: TDoublePoint;
 begin
   for i:=0 to Length(Figures)-1 do
     Figures[i].Draw(PaintBox1.Canvas);
 
-  if MaxPoint.X>PaintBox1.Width then
-    MaxP.X:=MaxPoint.X
+  if MaxPoint.X > PaintBox1.Width then
+    MaxP.X := MaxPoint.X
   else
-    MaxP.X:=PaintBox1.Width;
-  if MaxPoint.Y>PaintBox1.Height then
-    MaxP.Y:=MaxPoint.Y
+    MaxP.X := PaintBox1.Width;
+  if MaxPoint.Y > PaintBox1.Height then
+    MaxP.Y := MaxPoint.Y
   else
-    MaxP.Y:=PaintBox1.Height;
-  if MinPoint.X<MinP.X then MinP.X:=MinPoint.X;
-  if MinPoint.Y<MinP.Y then MinP.Y:=MinPoint.Y;
+    MaxP.Y := PaintBox1.Height;
+  if MinPoint.X < MinP.X then MinP.X := MinPoint.X;
+  if MinPoint.Y < MinP.Y then MinP.Y := MinPoint.Y;
 
-  if Offset.x+PaintBox1.Width>MaxP.X then
-    MaxP.X:=Offset.x+PaintBox1.Width;
-  if Offset.x<MinP.X then
-    MinP.X:=Offset.x;
-  if Offset.y+PaintBox1.Height>MaxP.Y then
-    MaxP.Y:=Offset.y+PaintBox1.Height;
-  if Offset.y<MinP.Y then
-    MinP.Y:=Offset.y;
+  if Offset.x + PaintBox1.Width > MaxP.X then
+    MaxP.X := Offset.x + PaintBox1.Width;
+  if Offset.x < MinP.X then
+    MinP.X := Offset.x;
+  if Offset.y + PaintBox1.Height > MaxP.Y then
+    MaxP.Y := Offset.y + PaintBox1.Height;
+  if Offset.y < MinP.Y then
+    MinP.Y := Offset.y;
 
-  HorzScroll.Min:=round(MinP.X*Zoom/100);
-  HorzScroll.Max:=round(MaxP.X*Zoom/100);
-  VertScroll.Min:=round(MinP.Y*Zoom/100);
-  VertScroll.Max:=round(MaxP.Y*Zoom/100);
+  HorzScroll.Min := round(MinP.X * Zoom / 100);
+  HorzScroll.Max := round(MaxP.X * Zoom / 100);
+  VertScroll.Min := round(MinP.Y * Zoom / 100);
+  VertScroll.Max := round(MaxP.Y * Zoom / 100);
 
-  PositionProgramChange:=true;
-  HorzScroll.Position:=Offset.x;
-  PositionProgramChange:=true;
-  VertScroll.Position:=Offset.y;
+  PositionProgramChange := true;
+  HorzScroll.Position := Offset.x;
+  PositionProgramChange := true;
+  VertScroll.Position := Offset.y;
 end;
 
 procedure TMainform.PaletteDblClick(Sender: TObject);
 begin
   if ColorDialog1.Execute then
     begin
-      with Sender as TDrawGrid do
-        begin
-          PalletColors[Col, Row] := ColorDialog1.Color;
-        end;
+      PalletColors[(Sender as TDrawGrid).Col, (Sender as TDrawGrid).Row] :=
+        ColorDialog1.Color;
     end;
 end;
 
@@ -305,20 +305,20 @@ begin
   Palette.MouseToCell(X, Y, aCol, aRow);
   if Button = mbLeft then
     begin
-      Color1:=PalletColors[aCol, aRow];
-      panelColor1.Color:=Color1;
+      Color1 := PalletColors[aCol, aRow];
+      panelColor1.Color := Color1;
     end;
   if Button = mbRight then
     begin
-      Color2:=PalletColors[aCol, aRow];
-      panelColor2.Color:=Color2;
+      Color2 := PalletColors[aCol, aRow];
+      panelColor2.Color := Color2;
     end;
 end;
 
 procedure TMainform.ShowAllButtonClick(Sender: TObject);
 begin
-  RectZoom(PaintBox1.Height,PaintBox1.Width,MinPoint,MaxPoint);
-  zoomedit.Text:=IntToStr(Zoom);
+  RectZoom(PaintBox1.Height, PaintBox1.Width, MinPoint, MaxPoint);
+  zoomedit.Text := IntToStr(Zoom);
 end;
 
 end.
