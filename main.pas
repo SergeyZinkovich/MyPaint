@@ -5,9 +5,9 @@ unit Main;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ExtCtrls,
-  Menus, StdCtrls, Grids,About,UFigures,UTools,Math,LCLType,Spin, ComCtrls,
-  Buttons, ActnList, ColorBox, CheckLst, UScale, Types;
+  Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, Menus,
+  ExtCtrls, StdCtrls, Grids, LCLIntf, LCLType, Buttons, GraphMath, Math, FPCanvas, TypInfo,
+  Spin, about, ufigures, utools, uscale, Types;
 
 type
 
@@ -35,6 +35,8 @@ type
     procedure ExitbuttonClick(Sender: TObject);
     procedure AboutbuttonClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure FormKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure PaintBox1MouseWheel(Sender: TObject; Shift: TShiftState;
       WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
     procedure ScrollScroll(Sender: TObject; ScrollCode: TScrollCode;
@@ -153,6 +155,20 @@ begin
   end;
 end;
 
+procedure TMainform.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if Key = VK_CONTROL then
+    CtrlPressed:=true;
+end;
+
+procedure TMainform.FormKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState
+  );
+begin
+  if Key = VK_CONTROL then
+    CtrlPressed:=False;
+end;
+
 procedure TMainform.PaintBox1MouseWheel(Sender: TObject; Shift: TShiftState;
   WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
 var
@@ -240,6 +256,7 @@ begin
   if Button = mbRight then
     RButton := true;
   ChoosenTool.MouseUp(Point(X, Y), RButton);
+  Invalidate;
 end;
 
 procedure TMainform.OnPaint(Sender: TObject);

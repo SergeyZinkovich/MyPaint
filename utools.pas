@@ -5,7 +5,10 @@ unit UTools;
 interface
 
 uses
-  Classes, SysUtils, Graphics, UScale, Controls, StdCtrls, ExtCtrls, Spin;
+  Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, Menus,
+  ExtCtrls, StdCtrls, Grids, LCLIntf, LCLType, Buttons,
+  GraphMath, Math, Spin, FPCanvas, TypInfo, LCL,
+  ufigures,uscale;
   type
 
   TTool = class
@@ -98,16 +101,25 @@ uses
     procedure MouseUp(Point: TPoint;RButton: Boolean); override;
     procedure PropertiesCreate(APanel: TPanel);override;
   end;
+
+  TSelectTool = class(TTool)
+    constructor Create;
+    procedure FigureCreate(Point: TPoint); override;
+    procedure AddPoint(Point: TPoint); override;
+    procedure MouseUp(Point: TPoint;RButton: Boolean); override;
+    procedure PropertiesCreate(APanel: TPanel);override;
+  end;
     function CasePenStyle(Index: integer):TPenStyle;
     function CaseBrushStyle(Index: integer):TBrushStyle;
 
 var
   Tools: array of TTool;
   OffsetFirstPoint: TPoint;
+  CtrlPressed:boolean;
 
 implementation
 
-uses Main, UFigures;
+uses Main;
 
 procedure RegisterTool(Tool: TTool);
 begin
@@ -508,10 +520,7 @@ end;
 
 procedure TRectZoomTool.AddPoint(Point: TPoint);
 begin
-  with Figures[high(Figures)] do
-    begin
-      Points[1] := Scrn2Wrld(Point);
-    end;
+  Figures[high(Figures)].Points[1] := Scrn2Wrld(Point);
 end;
 
 procedure TRectZoomTool.MouseUp(Point: TPoint;RButton: Boolean);
@@ -534,6 +543,101 @@ begin
 end;
 
 procedure TRectZoomTool.PropertiesCreate(APanel: TPanel);
+begin
+
+end;
+
+procedure TSelectTool.FigureCreate(Point: TPoint);
+begin
+    SetLength(Figures, length(Figures) + 1);
+  Figures[high(Figures)] := TFrame.Create;
+  Drawing := true;
+  with (Figures[high(Figures)] as TFrame) do
+    begin
+      SetLength(Points, 2);
+      Points[0] := Scrn2Wrld(Point);
+      Points[1] := Scrn2Wrld(Point);
+      PenStyle := psSolid;
+      PenColor := clBlack;
+      Width := 1;
+    end;
+end;
+
+procedure TSelectTool.AddPoint(Point: TPoint);
+begin
+  Figures[high(Figures)].Points[1] := Scrn2Wrld(Point);
+end;
+
+procedure TSelectTool.MouseUp(Point: TPoint;RButton: Boolean);
+var
+  ToolRegion: HRGN;
+  i: integer;
+begin
+  with Figures[high(Figures)] do
+  begin
+    Region := CreateRectRgn(WorldToScreen(Points[0]).x,WorldToScreen(Points[0]).y,
+      WorldToScreen(Points[1]).x,WorldToScreen(Points[1]).y);
+
+  If not((Points[0].X=Points[1].X) and (Points[0].Y=Points[1].Y)) then
+  begin
+    if (not CtrlPressed) then
+    begin
+      for i :=0 to high(Figures)-1 do
+      begin
+          if (CombineRgn(ToolRegion,Figures[i].Region,Figures[high(Figures)].Region,RGN_AND)
+            <> NULLREGION) then
+              Figures[i].Selected := false;
+      end;
+    end;
+    for i := 0 to high(Figures)-1 do
+    begin
+        DeleteObject(Figures[i].Region);
+        Figures[i].CreateRegion;
+        ToolRegion := CreateRectRgn(1,1,2,2);
+        if (CombineRgn(ToolRegion,Figures[i].Region,Figures[high(Figures)].Region,RGN_AND)
+          <> NULLREGION)  and (Figures[i].Selected = false) then
+            Figures[i].Selected := true
+        else if (CombineRgn(ToolRegion,Figures[i].Region,Figures[high(Figures)].Region,RGN_AND)
+          <> NULLREGION)  and (Figures[i].Selected = true) then
+            Figures[i].Selected := false;
+        DeleteObject(ToolRegion);
+    end;
+  end
+  else
+  begin
+      if (not CtrlPressed) then
+      begin
+        for i := 0 to high(Figures) - 1 do
+        begin
+          if (PtInRegion(Region,Point.X, Point.Y)=false) then
+            Figures[i].Selected := false;
+        end;
+      end;
+      for i := high(Figures)-1 downto low(Figures)  do
+      begin
+        with Figures[i] do
+        begin
+          DeleteObject(Region);
+          CreateRegion;
+          if (PtInRegion(Region,Point.X,Point.Y)=true) and (Selected = false) then
+          begin
+            Selected := true;
+            break;
+          end
+          else if (PtInRegion(Region,Point.X,Point.Y)=true) and (Selected = true) then
+          begin
+            Selected := false;
+            break;
+          end;
+        end;
+      end;
+  end;
+  end;
+  SetLength(Figures, length(Figures) - 1);
+  Mainform.ZoomEdit.Text := IntToStr(round(Zoom));
+end;
+
+procedure TSelectTool.PropertiesCreate(APanel: TPanel);
 begin
 
 end;
@@ -578,6 +682,11 @@ begin
   Icon:='ico/rectzoom.png';
 end;
 
+constructor TSelectTool.Create;
+begin
+  Icon:='ico/Select.png';
+end;
+
 initialization
 
 RegisterTool(TPolylineTool.Create);
@@ -588,6 +697,7 @@ RegisterTool(TLineTool.Create);
 RegisterTool(TRegularPolygonTool.Create);
 RegisterTool(TMoverTool.Create);
 RegisterTool(TRectZoomTool.Create);
+RegisterTool(TSelectTool.Create);
 
 end.
 
