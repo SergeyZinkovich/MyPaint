@@ -109,8 +109,11 @@ uses
     procedure MouseUp(Point: TPoint;RButton: Boolean); override;
     procedure PropertiesCreate(APanel: TPanel);override;
   end;
-    function CasePenStyle(Index: integer):TPenStyle;
-    function CaseBrushStyle(Index: integer):TBrushStyle;
+
+  function CasePenStyle(Index: integer):TPenStyle;
+  function CaseBrushStyle(Index: integer):TBrushStyle;
+  procedure PointSelectTool(Point: TPoint);
+  procedure RectSelectTool(Point: TPoint);
 
 var
   Tools: array of TTool;
@@ -139,13 +142,16 @@ begin
   ToolWidth.MinValue := 1;
   ToolWidth.Parent := APanel;
   ToolWidth.OnChange := @WidthChange;
+
   WidthLabel := TLabel.Create(Mainform);
   WidthLabel.Caption := 'Width';
   WidthLabel.Parent := APanel;
+
   PenStylesLable := TLabel.Create(Mainform);
   PenStylesLable.Top := 45;
   PenStylesLable.Caption := 'Pen Style';
   PenStylesLable.Parent := APanel;
+
   PenStylesBox := TComboBox.Create(Mainform);
   PenStylesBox.ReadOnly := True;
   PenStylesBox.Top := 60;
@@ -574,67 +580,73 @@ var
   i: integer;
 begin
   with Figures[high(Figures)] do
-  begin
-    Region := CreateRectRgn(WorldToScreen(Points[0]).x,WorldToScreen(Points[0]).y,
+    begin
+      Region := CreateRectRgn(
+      WorldToScreen(Points[0]).x,WorldToScreen(Points[0]).y,
       WorldToScreen(Points[1]).x,WorldToScreen(Points[1]).y);
+    end;
 
-  If not((Points[0].X=Points[1].X) and (Points[0].Y=Points[1].Y)) then
-  begin
-    if (not CtrlPressed) then
+  if (not CtrlPressed) then
     begin
       for i :=0 to high(Figures)-1 do
-      begin
+        begin
           if (CombineRgn(ToolRegion,Figures[i].Region,Figures[high(Figures)].Region,RGN_AND)
-            <> NULLREGION) then
-              Figures[i].Selected := false;
-      end;
+            <> NullRegion) then
+            Figures[i].Selected := false;
+        end;
     end;
+
+  with Figures[high(Figures)] do
+    begin
+      If not((Points[0].X=Points[1].X) and (Points[0].Y=Points[1].Y)) then
+        RectSelectTool(Point)
+      else
+        PointSelectTool(Point);
+    end;
+  SetLength(Figures, length(Figures) - 1);
+end;
+
+procedure RectSelectTool(Point: TPoint);
+var
+  i:integer;
+  ToolRegio: HRGN;
+begin
     for i := 0 to high(Figures)-1 do
     begin
         DeleteObject(Figures[i].Region);
         Figures[i].CreateRegion;
-        ToolRegion := CreateRectRgn(1,1,2,2);
-        if (CombineRgn(ToolRegion,Figures[i].Region,Figures[high(Figures)].Region,RGN_AND)
-          <> NULLREGION)  and (Figures[i].Selected = false) then
-            Figures[i].Selected := true
-        else if (CombineRgn(ToolRegion,Figures[i].Region,Figures[high(Figures)].Region,RGN_AND)
-          <> NULLREGION)  and (Figures[i].Selected = true) then
-            Figures[i].Selected := false;
-        DeleteObject(ToolRegion);
+        ToolRegio := CreateRectRgn(1,1,2,2);
+        if (CombineRgn(ToolRegio,Figures[i].Region,Figures[high(Figures)].Region,RGN_AND)
+          <> NULLREGION) then
+            begin
+              if Figures[i].Selected = false then
+                Figures[i].Selected := true
+              else
+                Figures[i].Selected := false;
+            end;
+        DeleteObject(ToolRegio);
     end;
-  end
-  else
-  begin
-      if (not CtrlPressed) then
-      begin
-        for i := 0 to high(Figures) - 1 do
-        begin
-          if (PtInRegion(Region,Point.X, Point.Y)=false) then
-            Figures[i].Selected := false;
-        end;
-      end;
+end;
+
+procedure PointSelectTool(Point: TPoint);
+var
+  i:integer;
+begin
       for i := high(Figures)-1 downto low(Figures)  do
       begin
         with Figures[i] do
         begin
           DeleteObject(Region);
           CreateRegion;
-          if (PtInRegion(Region,Point.X,Point.Y)=true) and (Selected = false) then
-          begin
-            Selected := true;
-            break;
-          end
-          else if (PtInRegion(Region,Point.X,Point.Y)=true) and (Selected = true) then
-          begin
-            Selected := false;
-            break;
-          end;
+          if PtInRegion(Region,Point.X,Point.Y)=true then
+            begin
+              if Selected = false then
+                Selected := true
+              else
+                Selected := false;
+            end;
         end;
       end;
-  end;
-  end;
-  SetLength(Figures, length(Figures) - 1);
-  Mainform.ZoomEdit.Text := IntToStr(round(Zoom));
 end;
 
 procedure TSelectTool.PropertiesCreate(APanel: TPanel);
