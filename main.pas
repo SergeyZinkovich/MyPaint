@@ -56,6 +56,8 @@ type
     procedure ShowAllButtonClick(Sender: TObject);
     procedure ToolClick(Sender: TObject);
     procedure zoomeditChange(Sender: TObject);
+    procedure DeletePropertyPanel;
+    procedure CreatePropertyPanel;
   private
     { private declarations }
   public
@@ -112,6 +114,9 @@ var
 begin
   PaintBox1.Canvas.Pen.Color := Color1;
   PaintBox1.Canvas.Brush.Color := Color2;
+  InvalidateHandler:=@Invalidate;
+  CreatePanelHandler:=@CreatePropertyPanel;
+  DeletePanelHandler:=@DeletePropertyPanel;
 
   SetLength(PalletColors, Palette.ColCount);
   for i := 0 to Palette.ColCount - 1 do
@@ -199,12 +204,22 @@ begin
 end;
 
 procedure TMainform.ToolClick(Sender: TObject);
+begin
+  ChoosenTool := Tools[(Sender as TSpeedButton).Tag];
+  DeletePropertyPanel;
+  CreatePropertyPanel;
+end;
+
+procedure TMainform.DeletePropertyPanel;
+begin
+  if FindComponent('PropertyPanel') <> nil then
+    FindComponent('PropertyPanel').Free;
+end;
+
+procedure TMainform.CreatePropertyPanel;
 var
   PropertyPanel:TPanel;
 begin
-  ChoosenTool := Tools[(Sender as TSpeedButton).Tag];
-  if FindComponent('PropertyPanel') <> nil then
-    FindComponent('PropertyPanel').Free;
   PropertyPanel := TPanel.Create(Mainform);
   PropertyPanel.Parent := Mainform;
   PropertyPanel.Anchors := [akTop,akRight];
@@ -255,7 +270,7 @@ begin
     RButton := false;
   if Button = mbRight then
     RButton := true;
-  ChoosenTool.MouseUp(Point(X, Y), RButton);
+  ChoosenTool.MouseUp(Point(X, Y), RButton,(FindComponent('PropertyPanel') as TPanel));
   Invalidate;
 end;
 
@@ -324,11 +339,15 @@ begin
     begin
       Color1 := PalletColors[aCol, aRow];
       panelColor1.Color := Color1;
+      if ChoosenTool.ClassName = TSelectTool.ClassName then
+        ColorChange(Color1, Color2, True);
     end;
   if Button = mbRight then
     begin
       Color2 := PalletColors[aCol, aRow];
       panelColor2.Color := Color2;
+      if ChoosenTool.ClassName = TSelectTool.ClassName then
+        ColorChange(Color1, Color2, False);
     end;
 end;
 

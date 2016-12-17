@@ -20,61 +20,48 @@ interface
     procedure DrawOutline(Point1,Point2: TDoublePoint; Canvas: TCanvas); virtual;
   end;
 
-  TPolyline = class(TFigure)
+  TLines = class(TFigure)
     PenStyle: TPenStyle;
     PenColor: TColor;
     Width: integer;
-    procedure Draw(Canvas: TCanvas); override;
-    procedure CreateRegion; override;
   end;
 
-  TRectangle = class(TFigure)
-    PenStyle: TPenStyle;
+  TFigures = class(TLines)
     BrushStyle: TBrushStyle;
-    PenColor: TColor;
     BrushColor: TColor;
-    Width: integer;
+  end;
+
+  TPolyline = class(TLines)
     procedure Draw(Canvas: TCanvas); override;
     procedure CreateRegion; override;
   end;
 
-  TRoundRectangle = class(TRectangle)
+  TRectangle = class(TFigures)
+    procedure Draw(Canvas: TCanvas); override;
+    procedure CreateRegion; override;
+  end;
+
+  TRoundRectangle = class(TFigures)
     RWidth,RHeight: integer;
     procedure Draw(Canvas: TCanvas); override;
     procedure CreateRegion; override;
   end;
 
-  TEllipse = class(TFigure)
-    PenStyle: TPenStyle;
-    BrushStyle: TBrushStyle;
-    PenColor: TColor;
-    BrushColor: TColor;
-    Width: integer;
+  TEllipse = class(TFigures)
     procedure Draw(Canvas: TCanvas); override;
     procedure CreateRegion; override;
   end;
 
-  TLine = class(TFigure)
-    PenStyle: TPenStyle;
-    PenColor: TColor;
-    Width: integer;
+  TLine = class(TLines)
     procedure Draw(Canvas: TCanvas); override;
     procedure CreateRegion; override;
   end;
 
-  TFrame = class(TFigure)
-    PenStyle: TPenStyle;
-    PenColor: TColor;
-    Width: integer;
+  TFrame = class(TLines)
     procedure Draw(Canvas: TCanvas); override;
   end;
 
-  TRegularPolygon = class(TFigure)
-    PenStyle: TPenStyle;
-    BrushStyle: TBrushStyle;
-    PenColor: TColor;
-    BrushColor: TColor;
-    Width: integer;
+  TRegularPolygon = class(TFigures)
     ConersCount: Integer;
     procedure Draw(Canvas: TCanvas); override;
     function Rotate(P1, P2: TDoublePoint; angle: double): TDoublePoint;
@@ -94,9 +81,15 @@ var
 begin
   if (Point1.X>Point2.X) then
     begin
-      a:=Point1;
-      Point1:=Point2;
-      Point2:=a;
+      a.X:=Point1.X;
+      Point1.X:=Point2.X;
+      Point2.X:=a.X;
+    end;
+  if (Point1.Y>Point2.Y) then
+    begin
+      a.Y:=Point1.Y;
+      Point1.Y:=Point2.Y;
+      Point2.Y:=a.Y;
     end;
   Canvas.Pen.Color := clBlack;
   Canvas.Pen.Width := 1;
@@ -120,6 +113,7 @@ begin
   begin
     DeleteObject(Region);
     Min:=DoublePoint(MaxFloat,MaxFloat);
+    Max := DoublePoint(MinFloat,MinFloat);
     for i := 1 to high(Points) do
       begin
         if Points[i].X > Max.X then Max.X:=Points[i].X;
@@ -201,7 +195,7 @@ procedure TRegularPolygon.Draw(Canvas: TCanvas);
 var
   i, r, k: Integer;
   FAngle: Double;
-  Max,Min:TDoublePoint;
+  Max,Min:TPoint;
   APolygon: array of TDoublePoint;
   APolygonScreen: array of TPoint;
 begin
@@ -223,13 +217,13 @@ begin
       APolygon[i].Y := Points[0].Y + sin(k * i / 180 * pi) * r;
       APolygonScreen[i] := WorldToScreen(Rotate(Points[0], APolygon[i], FAngle))
     end;
-  for i := 0 to ConersCount - 1 do
-    APolygonScreen[i] := WorldToScreen(DoublePoint(APolygonScreen[i].X, APolygonScreen[i].Y));
   Canvas.Polygon(APolygonScreen);
   if (Selected = true) then
   begin
-    DeleteObject(Region);
-    Min:=DoublePoint(MaxFloat,MaxFloat);
+    Min.X := MaxInt;
+    Min.Y := MaxInt;
+    Max.X := Low(integer);
+    Max.Y := Low(integer);
     for i := 0 to ConersCount - 1 do
       begin
         if APolygonScreen[i].X > Max.X then Max.X:=APolygonScreen[i].X;
@@ -237,7 +231,7 @@ begin
         if APolygonScreen[i].X < Min.X then Min.X:=APolygonScreen[i].X;
         if APolygonScreen[i].Y < Min.Y then Min.Y:=APolygonScreen[i].Y;
       end;
-      DrawOutline(Min, Max, Canvas);
+      DrawOutline(Scrn2Wrld(Min), Scrn2Wrld(Max), Canvas);
   end;
 end;
 
@@ -286,7 +280,7 @@ begin
   p1 := WorldToScreen(Points[0]);
   p2 := WorldToScreen(Points[1]);
   LineRegion(p1,p2,RegionPoints,Width);
-  Region := CreatePolygonRgn (RegionPoints,3,2);
+  Region := CreatePolygonRgn(RegionPoints,3,2);
 end;
 
 procedure TPolyline.CreateRegion;
@@ -335,24 +329,28 @@ end;
 
 procedure TRegularPolygon.CreateRegion;
 var
-  r, FAngle: double;
-  i,k: integer;
-  PolygonPoints: array of TDoublePoint;
-  PolygonPointsScr: array of TPoint;
+  i, r, k: Integer;
+  FAngle: Double;
+  Max,Min:TDoublePoint;
+  APolygon: array of TDoublePoint;
+  APolygonScreen: array of TPoint;
 begin
-  r := sqrt(abs(sqr(Points[1].x-Points[0].x) + sqr(Points[1].y-Points[0].y)));
-  k:=360 div ConersCount;
-  FAngle := Arctan2(Points[0].Y - Points[1].Y, Points[0].X - Points[1].X);
-  setlength (PolygonPoints, ConersCount);
-  setlength (PolygonPointsScr, ConersCount);
-  for i := low(PolygonPoints) to high(PolygonPoints) do
-  begin
-    PolygonPoints[i].x := Points[0].x + r*cos(i*k/180*Pi);
-    PolygonPoints[i].y := Points[0].Y + r*sin(i*k/180*Pi);
-    PolygonPointsScr[i] := WorldToScreen(Rotate(Points[0],PolygonPoints[i],FAngle));
+  k := 0;
+  k := 360 div ConersCount;
+  r := round(sqrt(sqr(abs(Points[0].X - Points[1].X))
+    + sqr(abs(Points[0].Y - Points[1].Y))));
+  FAngle := arctan2(Points[0].Y - Points[1].Y, Points[0].X - Points[1].X);
+  SetLength(APolygon, ConersCount);
+  SetLength(APolygonScreen, ConersCount);
+  for i := 0 to ConersCount - 1 do
+    begin
+      APolygon[i].X := Points[0].X + cos(k * i / 180 * pi) * r;
+      APolygon[i].Y := Points[0].Y + sin(k * i / 180 * pi) * r;
+      APolygonScreen[i] := WorldToScreen(Rotate(Points[0], APolygon[i], FAngle))
+    end;
+  Region := CreatePolygonRgn (APolygonScreen[0],length(APolygonScreen),winding);
+
   end;
-  Region := CreatePolygonRgn (PolygonPointsScr[0],length(PolygonPointsScr),winding);
-end;
 
 end.
 
