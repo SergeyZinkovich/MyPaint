@@ -130,6 +130,18 @@ object Mainform: TMainform
         Caption = 'Show All'
         OnClick = ShowAllButtonClick
       end
+      object SaveButton: TMenuItem
+        Caption = 'Save'
+        OnClick = SaveButtonClick
+      end
+      object SaveAsButton: TMenuItem
+        Caption = 'Save As'
+        OnClick = SaveAsButtonClick
+      end
+      object LoadButton: TMenuItem
+        Caption = 'Load'
+        OnClick = LoadButtonClick
+      end
       object Exitbutton: TMenuItem
         Caption = 'Exit'
         OnClick = ExitbuttonClick
@@ -143,7 +155,7 @@ object Mainform: TMainform
       end
     end
   end
-  object ColorDialog1: TColorDialog
+  object ColorDialog: TColorDialog
     Color = clBlack
     CustomColors.Strings = (
       'ColorA=0'
@@ -170,8 +182,12 @@ object Mainform: TMainform
     left = 104
     top = 144
   end
-  object MainMenu1: TMainMenu
-    left = 112
-    top = 552
+  object SaveDialog: TSaveDialog
+    left = 154
+    top = 221
+  end
+  object OpenDialog: TOpenDialog
+    left = 293
+    top = 158
   end
 end

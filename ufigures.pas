@@ -10,6 +10,7 @@ interface
    Buttons, GraphMath, Math, Spin, FPCanvas, TypInfo, LCL, Windows, uscale;
 
  type
+  TStringArray = array of String;
 
   TFigure = class
     Points: array of TDoublePoint;
@@ -18,17 +19,23 @@ interface
     procedure Draw(Canvas: TCanvas); virtual; abstract;
     procedure CreateRegion; virtual; abstract;
     procedure DrawOutline(Point1,Point2: TDoublePoint; Canvas: TCanvas); virtual;
+    function Save:TStringArray;virtual;
+    procedure Load;virtual;
   end;
 
   TLines = class(TFigure)
     PenStyle: TPenStyle;
     PenColor: TColor;
     Width: integer;
+    function Save: TStringArray; override;
+    procedure Load; override;
   end;
 
   TFigures = class(TLines)
     BrushStyle: TBrushStyle;
     BrushColor: TColor;
+    function Save: TStringArray; override;
+    procedure Load; override;
   end;
 
   TPolyline = class(TLines)
@@ -45,6 +52,8 @@ interface
     RWidth,RHeight: integer;
     procedure Draw(Canvas: TCanvas); override;
     procedure CreateRegion; override;
+    function Save: TStringArray; override;
+    procedure Load; override;
   end;
 
   TEllipse = class(TFigures)
@@ -66,9 +75,15 @@ interface
     procedure Draw(Canvas: TCanvas); override;
     function Rotate(P1, P2: TDoublePoint; angle: double): TDoublePoint;
     procedure CreateRegion; override;
+    function Save: TStringArray; override;
+    procedure Load; override;
   end;
 
   procedure LineRegion(p1,p2:TPoint;var tempPoints: array of TPoint;Width:integer);
+  function CasePenStyle(Index: integer):TPenStyle;
+  function CaseBrushStyle(Index: integer):TBrushStyle;
+  function CasePenStyleIndex(Style: TPenStyle): integer;
+  function CaseBrushStyleIndex(BrushStyle: TBrushStyle): integer;
 
 var
   RectR: TPoint;
@@ -349,8 +364,161 @@ begin
       APolygonScreen[i] := WorldToScreen(Rotate(Points[0], APolygon[i], FAngle))
     end;
   Region := CreatePolygonRgn (APolygonScreen[0],length(APolygonScreen),winding);
+end;
 
+function CasePenStyle(Index: integer): TPenStyle;
+begin
+  case Index of
+    0:Result := psSolid;
+    1:Result := psDash;
+    2:Result := psDot;
+    3:Result := psDashDot;
+    4:Result := psDashDotDot;
   end;
+end;
+
+function CasePenStyleIndex(Style: TPenStyle): integer;
+begin
+    case Style of
+    psSolid:Result := 0;
+    psDash:Result := 1;
+    psDot:Result := 2;
+    psDashDot:Result := 3;
+    psDashDotDot:Result := 4;
+  end;
+end;
+
+function CaseBrushStyle(Index: integer): TBrushStyle;
+begin
+  case Index of
+    0:Result := bsSolid;
+    1:Result := bsBDiagonal;
+    2:Result := bsDiagCross;
+    3:Result := bsVertical;
+    4:Result := bsCross;
+    5:Result := bsFDiagonal;
+    6:Result := bsHorizontal;
+  end;
+end;
+
+function CaseBrushStyleIndex(BrushStyle: TBrushStyle): integer;
+begin
+  case BrushStyle of
+    bsSolid: Result := 0;
+    bsBDiagonal:Result := 1;
+    bsDiagCross:Result := 2;
+    bsVertical:Result := 3;
+    bsCross:Result := 4;
+    bsFDiagonal:Result := 5;
+    bsHorizontal:Result := 6;
+  end;
+end;
+
+function TFigure.Save:TStringArray;
+var
+  i: integer;
+begin
+  SetLength(Result, 2);
+  Result[0] := ClassName;
+  Result[1] := IntToStr(Length(Points)) + ' ';
+  for i:=0 to High(Points) do
+    begin
+    Result[1] += FloatToStr(Points[i].X) + ' ';
+    Result[1] += FloatToStr(Points[i].Y) + ' ';
+    end;
+end;
+
+function TLines.Save:TStringArray;
+begin
+  Result := Inherited;
+  SetLength(Result, Length(Result) + 3);
+  Result[High(Result)-2] := IntToStr(Width);
+  Result[High(Result)-1] := ColorToString(PenColor);
+  Result[High(Result)] := IntToStr(CasePenStyleIndex(PenStyle));
+end;
+
+function TFigures.Save:TStringArray;
+begin
+  Result := Inherited;
+  SetLength(Result, Length(Result) + 2);
+  Result[High(Result)-1] := ColorToString(BrushColor);
+  Result[High(Result)] := IntToStr(CaseBrushStyleIndex(BrushStyle));
+end;
+
+function TRoundRectangle.Save:TStringArray;
+begin
+  Result := Inherited;
+  SetLength(Result, Length(Result) + 2);
+  Result[High(Result)] := IntToStr(RWidth);
+  Result[High(Result)] += ' ' + IntToStr(RHeight);
+end;
+
+function TRegularPolygon.Save:TStringArray;
+begin
+  Result := Inherited;
+  SetLength(Result, Length(Result) + 1);
+  Result[High(Result)] := IntToStr(ConersCount);
+end;
+
+procedure TFigure.Load;
+var
+  i, n: integer;
+begin
+  read(n);
+  SetLength(Points, n);
+  for i:=0 to n-1 do
+    begin
+      read(Points[i].X);
+      read(Points[i].Y);
+    end;
+  readln();
+end;
+
+procedure TLines.Load;
+var
+  a: integer;
+  s: string;
+begin
+  Inherited;
+  readln(a);
+  Width := a;
+  readln(s);
+  PenColor := StringToColor(s);
+  readln(a);
+  PenStyle := CasePenStyle(a);
+end;
+
+procedure TFigures.Load;
+var
+  a: integer;
+  s: string;
+begin
+  Inherited;
+  readln(s);
+  BrushColor := StringToColor(s);
+  readln(a);
+  BrushStyle := CaseBrushStyle(a);
+end;
+
+procedure TRoundRectangle.Load;
+var
+  a: integer;
+begin
+  Inherited;
+  read(a);
+  RWidth := a;
+  readln(a);
+  RHeight := a;
+end;
+
+procedure TRegularPolygon.Load;
+var
+  a: integer;
+begin
+  Inherited;
+  readln(a);
+  ConersCount := a;
+end;
 
 end.
 

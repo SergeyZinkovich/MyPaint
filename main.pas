@@ -14,8 +14,12 @@ type
   { TMainform }
 
   TMainform = class(TForm)
-    ColorDialog1: TColorDialog;
-    MainMenu1: TMainMenu;
+    ColorDialog: TColorDialog;
+    LoadButton: TMenuItem;
+    OpenDialog: TOpenDialog;
+    SaveButton: TMenuItem;
+    SaveAsButton: TMenuItem;
+    SaveDialog: TSaveDialog;
     ShowAllButton: TMenuItem;
     VertScroll: TScrollBar;
     HorzScroll: TScrollBar;
@@ -37,8 +41,11 @@ type
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure LoadButtonClick(Sender: TObject);
     procedure PaintBox1MouseWheel(Sender: TObject; Shift: TShiftState;
       WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
+    procedure SaveAsButtonClick(Sender: TObject);
+    procedure SaveButtonClick(Sender: TObject);
     procedure ScrollScroll(Sender: TObject; ScrollCode: TScrollCode;
       var ScrollPos: Integer);
     procedure MouseDown(Sender: TObject; Button: TMouseButton;
@@ -58,6 +65,8 @@ type
     procedure zoomeditChange(Sender: TObject);
     procedure DeletePropertyPanel;
     procedure CreatePropertyPanel;
+    procedure SaveFile(APictureName: string);
+    procedure WriteTitle;
   private
     { private declarations }
   public
@@ -74,6 +83,9 @@ var
   Color2: TColor = clWhite;
   PositionProgramChange: boolean;
   ChooseFirstTool: boolean = true;
+  PictureName:String = 'New Picture';
+  PreviousPicture: String;
+  PictureChanged: boolean = false;
 implementation
 
 {$R *.lfm}
@@ -167,11 +179,46 @@ begin
     CtrlPressed:=true;
 end;
 
-procedure TMainform.FormKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState
-  );
+procedure TMainform.FormKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
   if Key = VK_CONTROL then
     CtrlPressed:=False;
+end;
+
+procedure TMainform.LoadButtonClick(Sender: TObject);
+var
+  i,n,j: integer;
+  s: string;
+begin
+  OpenDialog.Filter := 'Picture|*.pnt|';
+  OpenDialog.Title := 'Load';
+  OpenDialog.Execute;
+
+  PictureName := OpenDialog.FileName;
+
+  AssignFile(input,PictureName);
+  Reset(input);
+  readln(s);
+  if s = '&*_MyPaint_*&' then
+    begin
+      readln(n);
+      SetLength(Figures, n);
+      for i:=0 to n-1 do
+        begin
+          readln(s);
+          for j:=0 to High(Tools) do
+            if Tools[j].FigureClass <> Nil then
+              if Tools[j].FigureClass.ClassName = s then
+                begin
+                  Figures[i] := Tools[j].FigureClass.Create;
+                  Figures[i].Load;
+                  Break;
+                end;
+        end;
+    end;
+
+  CloseFile(input);
+  Invalidate;
 end;
 
 procedure TMainform.PaintBox1MouseWheel(Sender: TObject; Shift: TShiftState;
@@ -190,6 +237,69 @@ begin
     Zoom := 1;
   CenterZoom(PaintBox1.Width, PaintBox1.Height, oldzoom);
   ZoomEdit.Text := IntToStr(Zoom);
+end;
+
+procedure TMainform.SaveAsButtonClick(Sender: TObject);
+begin
+    SaveDialog.InitialDir := GetCurrentDir;
+    SaveDialog.Title := 'Save As';
+    SaveDialog.DefaultExt := 'pnt';
+    SaveDialog.Filter := 'Picture|*.pnt|';
+    SaveDialog.FileName := PictureName;
+    if SaveDialog.Execute then
+      begin
+      if FileExists(SaveDialog.FileName) then
+        begin
+          if (Application.MessageBox('Overwrite file?',
+            '', MB_ICONQUESTION + MB_YESNO) = IDYES) then
+            begin
+              SaveFile(SaveDialog.FileName);
+          end else
+            begin
+              SaveAsButton.Click;
+              Exit;
+            end;
+        end else
+          begin
+            SaveFile(SaveDialog.FileName);
+          end;
+    end;
+end;
+
+procedure TMainform.SaveButtonClick(Sender: TObject);
+begin
+  if (PreviousPicture = PictureName) then
+    SaveFile(PictureName)
+  else
+    SaveAsButtonClick(TObject.Create);
+end;
+
+procedure TMainform.SaveFile(APictureName: string);
+var
+  i,j: integer;
+begin
+  AssignFile(output,APictureName);
+  rewrite(output);
+  writeln('&*_MyPaint_*&');
+  writeln(length(Figures));
+  for i:=0 to high(Figures) do
+    begin
+      for j:=0 to high((Figures[i]).Save) do
+        writeln((Figures[i]).Save[j]);
+    end;
+  CloseFile(output);
+  PictureName := APictureName;
+  PreviousPicture := APictureName;
+  PictureChanged:=false;
+  WriteTitle;
+end;
+
+procedure TMainform.WriteTitle;
+begin
+  Mainform.Caption := PictureName;
+  if PictureChanged then
+    Mainform.Caption := Mainform.Caption + '*';
+  Mainform.Caption := Mainform.Caption + ' -- My Paint';
 end;
 
 procedure TMainform.ScrollScroll(Sender: TObject; ScrollCode: TScrollCode;
@@ -245,6 +355,8 @@ end;
 procedure TMainform.MouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 begin
+  PictureChanged := True;
+  WriteTitle;
   PaintBox1.Canvas.Pen.Color := Color1;
   ChoosenTool.FigureCreate(Point(X, Y));
   Invalidate;
@@ -315,10 +427,10 @@ end;
 
 procedure TMainform.PaletteDblClick(Sender: TObject);
 begin
-  if ColorDialog1.Execute then
+  if ColorDialog.Execute then
     begin
       PalletColors[(Sender as TDrawGrid).Col, (Sender as TDrawGrid).Row] :=
-        ColorDialog1.Color;
+        ColorDialog.Color;
     end;
 end;
 
