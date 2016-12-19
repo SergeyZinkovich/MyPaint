@@ -10,7 +10,7 @@ uses
   GraphMath, Math, Spin, FPCanvas, TypInfo, LCL,
   ufigures,uscale;
 
-  type
+type
   TFigureClass = class of TFigure;
   TIntegerArray = array of integer;
 
@@ -19,7 +19,6 @@ uses
     function GetPropertyValue(F: TFigure): integer;virtual;abstract;
   end;
 
-    type
   ArrayOfProperty = array of TProperty;
 
   TWidthProperty = class(TProperty)
@@ -211,9 +210,8 @@ begin
   ToolWidth.Top := 20;
   ToolWidth.MinValue := 1;
   ToolWidth.Parent := APanel;
-  ToolWidth.OnChange := @WidthChange;
-
   ToolWidth.Value:=Value;
+  ToolWidth.OnChange := @WidthChange;
 
   if ChoosenTool.ClassName <> TSelectTool.ClassName then
     WidthChange(ToolWidth);
@@ -235,10 +233,9 @@ begin
   PenStylesBox.Parent := APanel;
   PenStylesBox.Items.CommaText := ',,,,';
   PenStylesBox.Style := csOwnerDrawFixed;
+  PenStylesBox.ItemIndex := Value;
   PenStylesBox.OnDrawItem := @PenStylesBoxDrawItem;
   PenStylesBox.OnChange := @PenStyleChange;
-
-  PenStylesBox.ItemIndex := Value;
 
   if ChoosenTool.ClassName <> TSelectTool.ClassName then
     PenStyleChange(PenStylesBox);
@@ -269,11 +266,10 @@ begin
   BrushStylesBox.ReadOnly := True;
   BrushStylesBox.Top := 100;
   BrushStylesBox.Style := csOwnerDrawFixed;
+  BrushStylesBox.ItemIndex := Value;
   BrushStylesBox.OnDrawItem := @BrushStylesBoxDrawItem;
   BrushStylesBox.Parent := APanel;
   BrushStylesBox.OnChange := @BrushStyleChange;
-
-  BrushStylesBox.ItemIndex := Value;
 
   if ChoosenTool.ClassName <> TSelectTool.ClassName then
     BrushStyleChange(BrushStylesBox);
@@ -399,9 +395,8 @@ begin
   WidthRoundingEdit.MinValue := 15;
   WidthRoundingEdit.MaxValue := 200;
   WidthRoundingEdit.Parent := APanel;
-  WidthRoundingEdit.OnChange := @RoundingWidthChange;
-
   WidthRoundingEdit.Value := Value;
+  WidthRoundingEdit.OnChange := @RoundingWidthChange;
 
   if ChoosenTool.ClassName <> TSelectTool.ClassName then
     RoundingWidthChange(WidthRoundingEdit);
@@ -416,9 +411,8 @@ begin
   HeightRoundingEdit.MinValue := 15;
   HeightRoundingEdit.MaxValue := 200;
   HeightRoundingEdit.Parent := APanel;
-  HeightRoundingEdit.OnChange := @RoundingHeightChange;
-
   HeightRoundingEdit.Value := Value;
+  HeightRoundingEdit.OnChange := @RoundingHeightChange;
 
   if ChoosenTool.ClassName <> TSelectTool.ClassName then
     RoundingHeightChange(HeightRoundingEdit);
@@ -687,9 +681,8 @@ begin
   ConersCountEdit.MinValue := 3;
   ConersCountEdit.MaxValue := 50;
   ConersCountEdit.Parent := APanel;
-  ConersCountEdit.OnChange := @ConersCountEditChange;
-
   ConersCountEdit.Value := Value;
+  ConersCountEdit.OnChange := @ConersCountEditChange;
 
   if ChoosenTool.ClassName <> TSelectTool.ClassName then
     ConersCountEditChange(ConersCountEdit);
@@ -918,7 +911,7 @@ begin
     if Figures[i].Selected then
       begin
         for j:=0 to High(Tools) do
-              if Tools[j].FigureClass.ClassName = Figures[i].ClassName then
+              if Tools[j].FigureClass = Figures[i].ClassType then
                 begin
                 ATool:=Tools[j];
                 Break;
