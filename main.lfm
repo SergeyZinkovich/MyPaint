@@ -1,14 +1,17 @@
 object Mainform: TMainform
-  Left = 290
+  Left = 421
   Height = 635
-  Top = 121
+  Top = 129
   Width = 884
   Caption = 'My paint'
   ClientHeight = 615
   ClientWidth = 884
   Color = clWhite
+  KeyPreview = True
   Menu = Menu1
   OnCreate = FormCreate
+  OnKeyDown = FormKeyDown
+  OnKeyUp = FormKeyUp
   LCLVersion = '1.6.0.4'
   object PaintBox1: TPaintBox
     Left = 0
@@ -27,9 +30,9 @@ object Mainform: TMainform
     OnPaint = OnPaint
   end
   object Palette: TDrawGrid
-    Left = 746
+    Left = 744
     Height = 120
-    Top = 80
+    Top = 120
     Width = 120
     Anchors = [akTop, akRight]
     AutoEdit = False
@@ -52,26 +55,26 @@ object Mainform: TMainform
     OnMouseDown = PaletteMouseDown
   end
   object panelColor1: TPanel
-    Left = 752
-    Height = 50
-    Top = 208
-    Width = 50
+    Left = 776
+    Height = 32
+    Top = 248
+    Width = 32
     Anchors = [akTop, akRight]
     Color = clWindowText
     ParentColor = False
     TabOrder = 1
   end
   object panelColor2: TPanel
-    Left = 778
-    Height = 50
-    Top = 236
-    Width = 50
+    Left = 792
+    Height = 32
+    Top = 264
+    Width = 32
     Anchors = [akTop, akRight]
     TabOrder = 2
   end
   object ToolPanel: TPanel
     Left = 744
-    Height = 64
+    Height = 96
     Top = 8
     Width = 139
     Anchors = [akTop, akRight]
