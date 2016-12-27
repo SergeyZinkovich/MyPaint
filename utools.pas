@@ -161,12 +161,9 @@ type
     procedure FigureCreate(Point: TPoint); override;
     procedure AddPoint(Point: TPoint); override;
     procedure PropertiesListCreate; override;
+    procedure MouseUp(Point: TPoint; RButton: Boolean; APanel: TPanel); override;
   end;
 
-  function CasePenStyle(Index: integer):TPenStyle;
-  function CaseBrushStyle(Index: integer):TBrushStyle;
-  function CasePenStyleIndex(Style: TPenStyle): integer;
-  function CaseBrushStyleIndex(BrushStyle: TBrushStyle): integer;
   procedure ColorChange(Color1, Color2: TColor; Mode: Boolean);
 
 var
@@ -214,7 +211,7 @@ begin
   ToolWidth.OnChange := @WidthChange;
 
   if ChoosenTool.ClassName <> TSelectTool.ClassName then
-    WidthChange(ToolWidth);
+    (ChoosenTool as TLinesTool).Width := 1;
 end;
 
 procedure TPenStyleProperty.ObjectsCreate(APanel: TPanel; Value: integer);
@@ -238,7 +235,7 @@ begin
   PenStylesBox.OnChange := @PenStyleChange;
 
   if ChoosenTool.ClassName <> TSelectTool.ClassName then
-    PenStyleChange(PenStylesBox);
+    (ChoosenTool as TLinesTool).ToolPenStyle := psSolid;
 end;
 
 procedure TPenStyleProperty.PenStylesBoxDrawItem(Control: TWinControl;
@@ -272,7 +269,7 @@ begin
   BrushStylesBox.OnChange := @BrushStyleChange;
 
   if ChoosenTool.ClassName <> TSelectTool.ClassName then
-    BrushStyleChange(BrushStylesBox);
+    (ChoosenTool as TFigureTool).ToolBrushStyle := bsSolid;
   end;
 
 procedure TBrushStyleProperty.BrushStylesBoxDrawItem(Control: TWinControl;
@@ -296,9 +293,12 @@ begin
   if ChoosenTool.ClassName <> TSelectTool.ClassName then
     (ChoosenTool as TLinesTool).Width := (Sender as TSpinEdit).Value
   else
+  begin
     for i:=0 to High(Figures) do
       if Figures[i].Selected then
         (Figures[i] as TLines).Width := (Sender as TSpinEdit).Value;
+    SaveInBuffer;
+  end;
   InvalidateHandler;
 end;
 
@@ -310,33 +310,14 @@ begin
     (ChoosenTool as TLinesTool).ToolPenStyle :=
       CasePenStyle((Sender as TComboBox).ItemIndex)
   else
+  begin
     for i:=0 to High(Figures) do
       if Figures[i].Selected then
         (Figures[i] as TLines).PenStyle :=
           CasePenStyle((Sender as TComboBox).ItemIndex);
+    SaveInBuffer;
+  end;
   InvalidateHandler;
-end;
-
-function CasePenStyle(Index: integer): TPenStyle;
-begin
-  case Index of
-    0:Result := psSolid;
-    1:Result := psDash;
-    2:Result := psDot;
-    3:Result := psDashDot;
-    4:Result := psDashDotDot;
-  end;
-end;
-
-function CasePenStyleIndex(Style: TPenStyle): integer;
-begin
-    case Style of
-    psSolid:Result := 0;
-    psDash:Result := 1;
-    psDot:Result := 2;
-    psDashDot:Result := 3;
-    psDashDotDot:Result := 4;
-  end;
 end;
 
 procedure TBrushStyleProperty.BrushStyleChange(Sender:TObject);
@@ -347,37 +328,14 @@ begin
     (ChoosenTool as TFigureTool).ToolBrushStyle :=
       CaseBrushStyle((Sender as TComboBox).ItemIndex)
   else
+  begin
     for i:=0 to High(Figures) do
       if Figures[i].Selected then
         (Figures[i] as TFigures).BrushStyle :=
           CaseBrushStyle((Sender as TComboBox).ItemIndex);
+    SaveInBuffer;
+  end;
   InvalidateHandler;
-end;
-
-function CaseBrushStyle(Index: integer): TBrushStyle;
-begin
-  case Index of
-    0:Result := bsSolid;
-    1:Result := bsBDiagonal;
-    2:Result := bsDiagCross;
-    3:Result := bsVertical;
-    4:Result := bsCross;
-    5:Result := bsFDiagonal;
-    6:Result := bsHorizontal;
-  end;
-end;
-
-function CaseBrushStyleIndex(BrushStyle: TBrushStyle): integer;
-begin
-  case BrushStyle of
-    bsSolid: Result := 0;
-    bsBDiagonal:Result := 1;
-    bsDiagCross:Result := 2;
-    bsVertical:Result := 3;
-    bsCross:Result := 4;
-    bsFDiagonal:Result := 5;
-    bsHorizontal:Result := 6;
-  end;
 end;
 
 procedure TWidthRoundingProperty.ObjectsCreate(APanel:TPanel; Value: integer);
@@ -399,7 +357,7 @@ begin
   WidthRoundingEdit.OnChange := @RoundingWidthChange;
 
   if ChoosenTool.ClassName <> TSelectTool.ClassName then
-    RoundingWidthChange(WidthRoundingEdit);
+    (ChoosenTool as TRoundRectangleTool).RoundingWidth := 15;
 end;
 
 procedure THeightRoundingProperty.ObjectsCreate(APanel:TPanel; Value: integer);
@@ -415,7 +373,7 @@ begin
   HeightRoundingEdit.OnChange := @RoundingHeightChange;
 
   if ChoosenTool.ClassName <> TSelectTool.ClassName then
-    RoundingHeightChange(HeightRoundingEdit);
+    (ChoosenTool as TRoundRectangleTool).RoundingHeight := 15;
 end;
 
 procedure ColorChange(Color1, Color2: TColor; Mode: Boolean);
@@ -432,11 +390,13 @@ begin
             (Figures[i] as TFigures).BrushColor := Color2;
         end;
   InvalidateHandler;
+  SaveInBuffer;
 end;
 
 procedure TTool.MouseUp(Point: TPoint;RButton: Boolean;APanel: TPanel);
 begin
-
+  if ChoosenTool is TLinesTool then
+    SaveInBuffer;
 end;
 
 procedure TPolylineTool.FigureCreate(Point: TPoint);
@@ -549,9 +509,12 @@ begin
   if ChoosenTool.ClassName <> TSelectTool.ClassName then
     (ChoosenTool as TRoundRectangleTool).RoundingWidth := (Sender as TSpinEdit).Value
   else
+  begin
     for i:=0 to High(Figures) do
       if Figures[i].Selected then
         (Figures[i] as TRoundRectangle).RWidth := (Sender as TSpinEdit).Value;
+    SaveInBuffer;
+  end;
   InvalidateHandler;
 end;
 
@@ -562,9 +525,12 @@ begin
   if ChoosenTool.ClassName <> TSelectTool.ClassName then
     (ChoosenTool as TRoundRectangleTool).RoundingHeight := (Sender as TSpinEdit).Value
   else
+  begin
     for i:=0 to High(Figures) do
       if Figures[i].Selected then
         (Figures[i] as TRoundRectangle).RHeight := (Sender as TSpinEdit).Value;
+    SaveInBuffer;
+  end;
   InvalidateHandler;
 end;
 
@@ -685,7 +651,7 @@ begin
   ConersCountEdit.OnChange := @ConersCountEditChange;
 
   if ChoosenTool.ClassName <> TSelectTool.ClassName then
-    ConersCountEditChange(ConersCountEdit);
+    (ChoosenTool as TRegularPolygonTool).ToolConersCount := 3;
 end;
 
 procedure TConersCountProperty.ConersCountEditChange(Sender: TObject);
@@ -695,9 +661,12 @@ begin
   if ChoosenTool.ClassName <> TSelectTool.ClassName then
     (ChoosenTool as TRegularPolygonTool).ToolConersCount := (Sender as TSpinEdit).Value
   else
+  begin
     for i:=0 to High(Figures) do
       if Figures[i].Selected then
         (Figures[i] as TRegularPolygon).ConersCount := (Sender as TSpinEdit).Value;
+    SaveInBuffer;
+  end;
   InvalidateHandler;
 end;
 
@@ -892,6 +861,11 @@ begin
         Figures[i].Points[j].Y := Figures[i].Points[j].Y + Scrn2Wrld(P).Y;
         end;
   APoint := Point;
+end;
+
+procedure TMoverTool.MouseUp(Point: TPoint; RButton: Boolean; APanel: TPanel);
+begin
+  SaveInBuffer;
 end;
 
 procedure TMoverTool.PropertiesListCreate;

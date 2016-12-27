@@ -21,6 +21,7 @@ interface
     procedure DrawOutline(Point1,Point2: TDoublePoint; Canvas: TCanvas); virtual;
     function Save:TStringArray;virtual;
     procedure Load;virtual;
+    function Copy: TFigure;virtual;
   end;
 
   TLines = class(TFigure)
@@ -29,6 +30,7 @@ interface
     Width: integer;
     function Save: TStringArray; override;
     procedure Load; override;
+    function Copy: TFigure; override;
   end;
 
   TFigures = class(TLines)
@@ -36,6 +38,7 @@ interface
     BrushColor: TColor;
     function Save: TStringArray; override;
     procedure Load; override;
+    function Copy: TFigure; override;
   end;
 
   TPolyline = class(TLines)
@@ -54,6 +57,7 @@ interface
     procedure CreateRegion; override;
     function Save: TStringArray; override;
     procedure Load; override;
+    function Copy: TFigure; override;
   end;
 
   TEllipse = class(TFigures)
@@ -77,6 +81,7 @@ interface
     procedure CreateRegion; override;
     function Save: TStringArray; override;
     procedure Load; override;
+    function Copy: TFigure; override;
   end;
 
   procedure LineRegion(p1,p2:TPoint;var tempPoints: array of TPoint;Width:integer);
@@ -84,9 +89,15 @@ interface
   function CaseBrushStyle(Index: integer):TBrushStyle;
   function CasePenStyleIndex(Style: TPenStyle): integer;
   function CaseBrushStyleIndex(BrushStyle: TBrushStyle): integer;
+  procedure SaveInBuffer;
+  procedure LoadFromBuffer;
 
 var
+  Figures: array of TFigure;
   RectR: TPoint;
+  BufferPointer: integer;
+  BufferBegin: integer;
+  Buffer: array[0..99] of array of TFigure;
 
 implementation
 
@@ -414,6 +425,50 @@ begin
   end;
 end;
 
+function TFigure.Copy: TFigure;
+var
+  i: integer;
+begin
+  case Self.ClassName of
+    'TPolyline': Result := TPolyline.Create;
+    'TLine': Result := TLine.Create;
+    'TRectangle': Result := TRectangle.Create;
+    'TRoundRectangle': Result := TRoundRectangle.Create;
+    'TEllipse': Result := TEllipse.Create;
+    'TRegularPolygon': Result := TRegularPolygon.Create;
+  end;
+  SetLength(Result.Points, Length(Self.Points));
+  for i:=0 to High(Self.Points) do
+  Result.Points[i] := Self.Points[i];
+end;
+
+function TLines.Copy: TFigure;
+begin
+  Result := Inherited;
+  (Result as TLines).PenColor := Self.PenColor;
+  (Result as TLines).PenStyle := Self.PenStyle;
+end;
+
+function TFigures.Copy: TFigure;
+begin
+  Result := Inherited;
+  (Result as TFigures).BrushColor := Self.BrushColor;
+  (Result as TFigures).BrushStyle := Self.BrushStyle;
+end;
+
+function TRoundRectangle.Copy: TFigure;
+begin
+  Result := Inherited;
+  (Result as TRoundRectangle).RHeight := Self.RHeight;
+  (Result as TRoundRectangle).RWidth := Self.RWidth;
+end;
+
+function TRegularPolygon.Copy: TFigure;
+begin
+  Result := Inherited;
+  (Result as TRegularPolygon).ConersCount := Self.ConersCount;
+end;
+
 function TFigure.Save:TStringArray;
 var
   i: integer;
@@ -470,6 +525,7 @@ begin
     begin
       read(Points[i].X);
       read(Points[i].Y);
+      FindMinMax(Points[i]);
     end;
   readln();
 end;
@@ -518,6 +574,39 @@ begin
   Inherited;
   readln(a);
   ConersCount := a;
+end;
+
+procedure SaveInBuffer;
+var
+  BufferCount, i, j: integer;
+begin
+  if BufferPointer >= BufferBegin then
+  begin
+    BufferCount := BufferPointer - BufferBegin + 1;
+  end
+  else
+  begin
+    BufferCount := 100 - BufferBegin + BufferPointer + 1;
+  end;
+  if BufferCount = 100 then
+    BufferBegin := (BufferBegin + 1) mod 100;
+  BufferPointer := (BufferPointer + 1) mod 100;
+  SetLength(Buffer[BufferPointer], Length(Figures));
+  for i:=0 to High(Figures) do
+  begin
+    //Figures[i].Selected := False;
+    Buffer[BufferPointer][i] := Figures[i].Copy;
+  end;
+end;
+
+procedure LoadFromBuffer;
+var
+  i: integer;
+begin
+
+  SetLength(Figures, Length(Buffer[BufferPointer]));
+  for i:=0 to High(Figures) do
+    Figures[i] := Buffer[BufferPointer][i].Copy;
 end;
 
 end.

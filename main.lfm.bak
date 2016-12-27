@@ -1,0 +1,207 @@
+object Mainform: TMainform
+  Left = 494
+  Height = 635
+  Top = 151
+  Width = 884
+  Caption = 'My paint'
+  ClientHeight = 615
+  ClientWidth = 884
+  Color = clWhite
+  KeyPreview = True
+  Menu = Menu1
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnKeyDown = FormKeyDown
+  OnKeyUp = FormKeyUp
+  LCLVersion = '1.6.0.4'
+  object PaintBox1: TPaintBox
+    Left = 0
+    Height = 578
+    Top = 0
+    Width = 711
+    Align = alClient
+    BorderSpacing.Right = 173
+    BorderSpacing.Bottom = 37
+    Color = clWhite
+    ParentColor = False
+    OnMouseDown = MouseDown
+    OnMouseMove = MouseMove
+    OnMouseUp = MouseUp
+    OnMouseWheel = PaintBox1MouseWheel
+    OnPaint = OnPaint
+  end
+  object Palette: TDrawGrid
+    Left = 744
+    Height = 120
+    Top = 120
+    Width = 120
+    Anchors = [akTop, akRight]
+    AutoEdit = False
+    ColCount = 6
+    DefaultColWidth = 20
+    DefaultDrawing = False
+    DefaultRowHeight = 20
+    ExtendedSelect = False
+    FixedColor = clHighlightText
+    FixedCols = 0
+    FixedRows = 0
+    Flat = True
+    ParentColor = True
+    RowCount = 6
+    ScrollBars = ssNone
+    TabOrder = 0
+    TabStop = False
+    OnDblClick = PaletteDblClick
+    OnDrawCell = PaletteDrawCell
+    OnMouseDown = PaletteMouseDown
+  end
+  object panelColor1: TPanel
+    Left = 776
+    Height = 32
+    Top = 248
+    Width = 32
+    Anchors = [akTop, akRight]
+    Color = clWindowText
+    ParentColor = False
+    TabOrder = 1
+  end
+  object panelColor2: TPanel
+    Left = 792
+    Height = 32
+    Top = 264
+    Width = 32
+    Anchors = [akTop, akRight]
+    TabOrder = 2
+  end
+  object ToolPanel: TPanel
+    Left = 744
+    Height = 96
+    Top = 8
+    Width = 139
+    Anchors = [akTop, akRight]
+    TabOrder = 3
+  end
+  object VertScroll: TScrollBar
+    Left = 712
+    Height = 578
+    Top = 0
+    Width = 20
+    Anchors = [akTop, akRight, akBottom]
+    Kind = sbVertical
+    Max = 578
+    PageSize = 578
+    TabOrder = 4
+    OnScroll = ScrollScroll
+  end
+  object HorzScroll: TScrollBar
+    Left = 0
+    Height = 20
+    Top = 579
+    Width = 711
+    Anchors = [akLeft, akRight, akBottom]
+    LargeChange = 10
+    Max = 754
+    PageSize = 753
+    TabOrder = 5
+    OnScroll = ScrollScroll
+  end
+  object ZoomEdit: TSpinEdit
+    Left = 752
+    Height = 23
+    Top = 304
+    Width = 93
+    Anchors = [akTop, akRight]
+    Increment = 10
+    MaxValue = 1000
+    MinValue = 1
+    OnChange = zoomeditChange
+    TabOrder = 6
+    Value = 100
+  end
+  object Menu1: TMainMenu
+    left = 25
+    top = 13
+    object MenuItem1: TMenuItem
+      Caption = 'File'
+      object Clearbutton: TMenuItem
+        Caption = 'Clear'
+        OnClick = ClearbuttonClick
+      end
+      object UndoButton: TMenuItem
+        Caption = 'Undo'
+        OnClick = UndoButtonClick
+      end
+      object RedoButton: TMenuItem
+        Caption = 'Redo'
+        OnClick = RedoButtonClick
+      end
+      object ShowAllButton: TMenuItem
+        Caption = 'Show All'
+        OnClick = ShowAllButtonClick
+      end
+      object SaveButton: TMenuItem
+        Caption = 'Save'
+        OnClick = SaveButtonClick
+      end
+      object SaveAsButton: TMenuItem
+        Caption = 'Save As'
+        OnClick = SaveAsButtonClick
+      end
+      object LoadButton: TMenuItem
+        Caption = 'Load'
+        OnClick = LoadButtonClick
+      end
+      object Exitbutton: TMenuItem
+        Caption = 'Exit'
+        OnClick = ExitbuttonClick
+      end
+    end
+    object MenuItem3: TMenuItem
+      Caption = 'Help'
+      object Aboutbutton: TMenuItem
+        Caption = 'About'
+        OnClick = AboutbuttonClick
+      end
+    end
+  end
+  object ColorDialog: TColorDialog
+    Color = clBlack
+    CustomColors.Strings = (
+      'ColorA=0'
+      'ColorB=80'
+      'ColorC=8000'
+      'ColorD=8080'
+      'ColorE=800000'
+      'ColorF=800080'
+      'ColorG=808000'
+      'ColorH=808080'
+      'ColorI=C0C0C0'
+      'ColorJ=FF'
+      'ColorK=FF00'
+      'ColorL=FFFF'
+      'ColorM=FF0000'
+      'ColorN=FF00FF'
+      'ColorO=FFFF00'
+      'ColorP=FFFFFF'
+      'ColorQ=C0DCC0'
+      'ColorR=F0CAA6'
+      'ColorS=F0FBFF'
+      'ColorT=A4A0A0'
+    )
+    left = 104
+    top = 144
+  end
+  object SaveDialog: TSaveDialog
+    Title = 'Save As'
+    DefaultExt = '.pnt'
+    Filter = 'Picture|*.pnt|'
+    left = 154
+    top = 221
+  end
+  object OpenDialog: TOpenDialog
+    Title = 'Load'
+    Filter = 'Picture|*.pnt|'
+    left = 293
+    top = 158
+  end
+end

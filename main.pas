@@ -16,6 +16,8 @@ type
   TMainform = class(TForm)
     ColorDialog: TColorDialog;
     LoadButton: TMenuItem;
+    RedoButton: TMenuItem;
+    UndoButton: TMenuItem;
     OpenDialog: TOpenDialog;
     SaveButton: TMenuItem;
     SaveAsButton: TMenuItem;
@@ -38,12 +40,14 @@ type
     procedure ClearbuttonClick(Sender: TObject);
     procedure ExitbuttonClick(Sender: TObject);
     procedure AboutbuttonClick(Sender: TObject);
+    procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure LoadButtonClick(Sender: TObject);
     procedure PaintBox1MouseWheel(Sender: TObject; Shift: TShiftState;
       WheelDelta: Integer; MousePos: TPoint; var Handled: Boolean);
+    procedure RedoButtonClick(Sender: TObject);
     procedure SaveAsButtonClick(Sender: TObject);
     procedure SaveButtonClick(Sender: TObject);
     procedure ScrollScroll(Sender: TObject; ScrollCode: TScrollCode;
@@ -62,21 +66,26 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure ShowAllButtonClick(Sender: TObject);
     procedure ToolClick(Sender: TObject);
+    procedure UndoButtonClick(Sender: TObject);
     procedure zoomeditChange(Sender: TObject);
     procedure DeletePropertyPanel;
     procedure CreatePropertyPanel;
-    procedure SaveFile(APictureName: string);
+    procedure SavePicture(APictureName: string);
     procedure WriteTitle;
+    procedure OfferToSave;
+    procedure LoadPicture;
   private
     { private declarations }
   public
     { public declarations }
   end;
 
+const
+  Sign: string = '&*_MyPaint_*&';
+
 var
   PalletColors: array of array of TColor;
   ChoosenTool: TTool;
-  Figures: array of TFigure;
   Mainform: TMainform;
   Drawing: boolean;
   Color1: TColor = clBlack;
@@ -116,6 +125,18 @@ end;
 procedure TMainform.AboutbuttonClick(Sender: TObject);
 begin
   Aboutform.ShowModal();
+end;
+
+procedure TMainform.FormClose(Sender: TObject; var CloseAction: TCloseAction);
+begin
+  OfferToSave;
+end;
+
+procedure TMainform.OfferToSave;
+begin
+  if PictureChanged then
+    if (Application.MessageBox('Save Picture?','', MB_ICONQUESTION + MB_YESNO) = IDYES) then
+      SaveButton.Click;
 end;
 
 procedure TMainform.FormCreate(Sender: TObject);
@@ -177,6 +198,14 @@ procedure TMainform.FormKeyDown(Sender: TObject; var Key: Word;
 begin
   if Key = VK_CONTROL then
     CtrlPressed:=true;
+  if CtrlPressed and (Key = VK_S) then
+    SaveButton.Click;
+  if CtrlPressed and (Key = VK_O) then
+    LoadButton.Click;
+  if CtrlPressed and (Key = VK_Z) then
+    UndoButton.Click;
+  if CtrlPressed and (Key = VK_X) then
+    RedoButton.Click;
 end;
 
 procedure TMainform.FormKeyUp(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -186,20 +215,26 @@ begin
 end;
 
 procedure TMainform.LoadButtonClick(Sender: TObject);
+begin
+  OfferToSave;
+  if OpenDialog.Execute then
+    begin
+      PictureName := OpenDialog.FileName;
+      Clearbutton.Click;
+      LoadPicture;
+    end;
+Invalidate;
+end;
+
+procedure TMainform.LoadPicture;
 var
   i,n,j: integer;
   s: string;
 begin
-  OpenDialog.Filter := 'Picture|*.pnt|';
-  OpenDialog.Title := 'Load';
-  OpenDialog.Execute;
-
-  PictureName := OpenDialog.FileName;
-
   AssignFile(input,PictureName);
   Reset(input);
   readln(s);
-  if s = '&*_MyPaint_*&' then
+  if s = Sign then
     begin
       readln(n);
       SetLength(Figures, n);
@@ -207,8 +242,8 @@ begin
         begin
           readln(s);
           for j:=0 to High(Tools) do
-            if Tools[j].FigureClass <> Nil then
-              if Tools[j].FigureClass.ClassName = s then
+            if (Tools[j].FigureClass <> Nil) and
+              (Tools[j].FigureClass.ClassName = s) then
                 begin
                   Figures[i] := Tools[j].FigureClass.Create;
                   Figures[i].Load;
@@ -216,9 +251,7 @@ begin
                 end;
         end;
     end;
-
-  CloseFile(input);
-  Invalidate;
+CloseFile(input);
 end;
 
 procedure TMainform.PaintBox1MouseWheel(Sender: TObject; Shift: TShiftState;
@@ -239,48 +272,47 @@ begin
   ZoomEdit.Text := IntToStr(Zoom);
 end;
 
+procedure TMainform.RedoButtonClick(Sender: TObject);
+begin
+  if (Buffer[BufferPointer + 1] <> Nil) and (BufferPointer + 1 <> BufferBegin) then
+  begin
+    BufferPointer := (BufferPointer + 1) mod 100;
+    LoadFromBuffer;
+    if (Buffer[BufferPointer + 1] = Nil) or (BufferPointer + 1 = BufferBegin) then
+      RedoButton.Enabled := False;
+    Invalidate;
+  end;
+end;
+
 procedure TMainform.SaveAsButtonClick(Sender: TObject);
 begin
     SaveDialog.InitialDir := GetCurrentDir;
-    SaveDialog.Title := 'Save As';
-    SaveDialog.DefaultExt := 'pnt';
-    SaveDialog.Filter := 'Picture|*.pnt|';
     SaveDialog.FileName := PictureName;
-    if SaveDialog.Execute then
-      begin
-      if FileExists(SaveDialog.FileName) then
-        begin
-          if (Application.MessageBox('Overwrite file?',
-            '', MB_ICONQUESTION + MB_YESNO) = IDYES) then
-            begin
-              SaveFile(SaveDialog.FileName);
-          end else
-            begin
-              SaveAsButton.Click;
-              Exit;
-            end;
-        end else
-          begin
-            SaveFile(SaveDialog.FileName);
-          end;
-    end;
+    if not SaveDialog.Execute then exit;
+    if not FileExists(SaveDialog.FileName) or (
+      Application.MessageBox(
+        'Overwrite file?','',MB_ICONQUESTION + MB_YESNO) = IDYES)
+    then
+      SavePicture(SaveDialog.FileName)
+    else
+      SaveAsButton.Click;
 end;
 
 procedure TMainform.SaveButtonClick(Sender: TObject);
 begin
   if (PreviousPicture = PictureName) then
-    SaveFile(PictureName)
+    SavePicture(PictureName)
   else
     SaveAsButtonClick(TObject.Create);
 end;
 
-procedure TMainform.SaveFile(APictureName: string);
+procedure TMainform.SavePicture(APictureName: string);
 var
   i,j: integer;
 begin
   AssignFile(output,APictureName);
   rewrite(output);
-  writeln('&*_MyPaint_*&');
+  writeln(Sign);
   writeln(length(Figures));
   for i:=0 to high(Figures) do
     begin
@@ -320,10 +352,24 @@ begin
   CreatePropertyPanel;
 end;
 
+procedure TMainform.UndoButtonClick(Sender: TObject);
+begin
+  if BufferPointer <> BufferBegin then
+    BufferPointer := BufferPointer - 1;
+  if BufferPointer = -1 then
+    BufferPointer := 99;
+  LoadFromBuffer;
+  if BufferBegin = BufferPointer then
+    UndoButton.Enabled := False;
+  Invalidate;
+end;
+
 procedure TMainform.DeletePropertyPanel;
 begin
   if FindComponent('PropertyPanel') <> nil then
-    FindComponent('PropertyPanel').Free;
+    begin
+      FindComponent('PropertyPanel').Free;
+    end;
 end;
 
 procedure TMainform.CreatePropertyPanel;
@@ -423,6 +469,12 @@ begin
   HorzScroll.Position := Offset.x;
   PositionProgramChange := true;
   VertScroll.Position := Offset.y;
+
+  if BufferPointer <> BufferBegin then
+    UndoButton.Enabled := True;
+  if (Buffer[(BufferPointer + 1) mod 100] <> Nil)
+    and (((BufferPointer + 1) mod 100) <> BufferBegin) then
+      RedoButton.Enabled := True;
 end;
 
 procedure TMainform.PaletteDblClick(Sender: TObject);

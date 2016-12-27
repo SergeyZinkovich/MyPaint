@@ -1,7 +1,7 @@
 object Mainform: TMainform
-  Left = 421
+  Left = 494
   Height = 635
-  Top = 129
+  Top = 151
   Width = 884
   Caption = 'My paint'
   ClientHeight = 615
@@ -9,6 +9,7 @@ object Mainform: TMainform
   Color = clWhite
   KeyPreview = True
   Menu = Menu1
+  OnClose = FormClose
   OnCreate = FormCreate
   OnKeyDown = FormKeyDown
   OnKeyUp = FormKeyUp
@@ -126,6 +127,16 @@ object Mainform: TMainform
         Caption = 'Clear'
         OnClick = ClearbuttonClick
       end
+      object UndoButton: TMenuItem
+        Caption = 'Undo'
+        Enabled = False
+        OnClick = UndoButtonClick
+      end
+      object RedoButton: TMenuItem
+        Caption = 'Redo'
+        Enabled = False
+        OnClick = RedoButtonClick
+      end
       object ShowAllButton: TMenuItem
         Caption = 'Show All'
         OnClick = ShowAllButtonClick
@@ -183,10 +194,15 @@ object Mainform: TMainform
     top = 144
   end
   object SaveDialog: TSaveDialog
+    Title = 'Save As'
+    DefaultExt = '.pnt'
+    Filter = 'Picture|*.pnt|'
     left = 154
     top = 221
   end
   object OpenDialog: TOpenDialog
+    Title = 'Load'
+    Filter = 'Picture|*.pnt|'
     left = 293
     top = 158
   end
